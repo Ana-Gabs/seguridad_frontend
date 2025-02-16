@@ -5,7 +5,7 @@ import { Grid, Box, Button, TextField } from '@mui/material';
 import { PasswordField } from '../funccions/validations/Password';
 import '../styles/Login.css';
 
-const API_URL = process.env.REACT_APP_WEBSERVICE_IP;
+const WEBSERVICE_IP = process.env.WEBSERVICE_IP;
 
 const Login = () => {
     const navigate = useNavigate();
@@ -41,7 +41,7 @@ const Login = () => {
         }
 
         try {
-            const response = await fetch(`${API_URL}/users/login`, {
+            const response = await fetch(`${WEBSERVICE_IP}/users/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ const Login = () => {
             if (response.ok) {
                 const result = await response.json();
                 localStorage.setItem('token', result.token);
-                navigate('/dashboard');
+                navigate('/profile');
             } else {
                 setMensaje('Error al iniciar sesión.');
             }
