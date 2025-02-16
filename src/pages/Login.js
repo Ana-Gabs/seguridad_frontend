@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Grid, Box, Button, TextField } from '@mui/material';
 import { PasswordField } from '../funccions/validations/Password';
-import '../styles/Login.css'; 
+import '../styles/Login.css';
+
+const API_URL = process.env.REACT_APP_WEBSERVICE_IP;
 
 const Login = () => {
     const navigate = useNavigate();
@@ -39,7 +41,7 @@ const Login = () => {
         }
 
         try {
-            const response = await fetch('http://localhost:8080/login', {
+            const response = await fetch(`${API_URL}/users/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
