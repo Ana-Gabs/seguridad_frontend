@@ -10,12 +10,12 @@ const WEBSERVICE_IP = process.env.WEBSERVICE_IP;
 const Login = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        correo: '',
+        user: '',
         contra: ''
     });
     const [mensaje, setMensaje] = useState('');
     const [errores, setErrores] = useState({
-        correoError: '',
+        userError: '',
         contraError: ''
     });
 
@@ -35,7 +35,7 @@ const Login = () => {
         e.preventDefault();
         setMensaje('');
 
-        if (!formData.correo || !formData.contra) {
+        if (!formData.user || !formData.contra) {
             setMensaje('Por favor, completa todos los campos.');
             return;
         }
@@ -77,13 +77,13 @@ const Login = () => {
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
                             <TextField
-                                label="Correo"
-                                name="correo"
-                                value={formData.correo}
+                                label="Usuario"
+                                name="user"
+                                value={formData.user}
                                 onChange={handleChange}
                                 fullWidth
-                                error={!!errores.correoError}
-                                helperText={errores.correoError}
+                                error={!!errores.userError}
+                                helperText={errores.userError}
                             />
                         </Grid>
                         <Grid item xs={12}>
