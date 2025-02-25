@@ -1,23 +1,20 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Grid, Box, Button, TextField } from '@mui/material';
-import { PasswordField } from '../funccions/validations/Password';
-import '../styles/Login.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Grid, Box, Button, TextField } from "@mui/material";
+import { PasswordField } from "../funccions/validations/Password";
+import "../styles/Login.css";
 
-const WEBSERVICE_IP = process.env.WEBSERVICE_IP;
+const WEBSERVICE_IP = process.env.REACT_APP_WEBSERVICE_IP || "http://localhost:3001";
 
 const Login = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        user: '',
-        contra: ''
+        emailOrUsername: "",
+        password: "",
     });
-    const [mensaje, setMensaje] = useState('');
-    const [errores, setErrores] = useState({
-        userError: '',
-        contraError: ''
-    });
+    const [mensaje, setMensaje] = useState("");
+    const [errores, setErrores] = useState({});
 
     const handleBackClick = () => {
         navigate(-1);
@@ -33,31 +30,39 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMensaje('');
+        setMensaje("");
+        setErrores({});
 
-        if (!formData.user || !formData.contra) {
-            setMensaje('Por favor, completa todos los campos.');
+        if (!formData.emailOrUsername || !formData.password) {
+            setMensaje("Por favor, completa todos los campos.");
             return;
         }
 
         try {
             const response = await fetch(`${WEBSERVICE_IP}/users/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
+            const result = await response.json();
+
             if (response.ok) {
-                const result = await response.json();
-                localStorage.setItem('token', result.token);
-                navigate('/profile');
+                // Guardar token y usuario en localStorage
+                localStorage.setItem("token", result.token);
+                localStorage.setItem("user", JSON.stringify(result.user));
+
+                navigate("/home");
             } else {
-                setMensaje('Error al iniciar sesión.');
+                // Manejar errores del backend
+                if (result.intDataMessage) {
+                    setErrores(result.intDataMessage[0]); // Extrae los errores específicos
+                } else {
+                    setMensaje("Error al iniciar sesión.");
+                }
             }
         } catch (error) {
-            setMensaje('Error de conexión. Inténtalo de nuevo más tarde.');
+            setMensaje("Error de conexión. Inténtalo de nuevo más tarde.");
         }
     };
 
@@ -77,23 +82,23 @@ const Login = () => {
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
                             <TextField
-                                label="Usuario"
-                                name="user"
-                                value={formData.user}
+                                label="Usuario o Correo"
+                                name="emailOrUsername"
+                                value={formData.emailOrUsername}
                                 onChange={handleChange}
                                 fullWidth
-                                error={!!errores.userError}
-                                helperText={errores.userError}
+                                error={!!errores.credentials}
+                                helperText={errores.credentials}
                             />
                         </Grid>
                         <Grid item xs={12}>
                             <PasswordField
                                 label="Contraseña"
-                                name="contra"
-                                value={formData.contra}
+                                name="password"
+                                value={formData.password}
                                 onChange={handleChange}
-                                error={!!errores.contraError}
-                                helperText={errores.contraError}
+                                error={!!errores.credentials}
+                                helperText={errores.credentials}
                             />
                         </Grid>
                         <Grid item xs={12}>
@@ -105,7 +110,7 @@ const Login = () => {
                     {mensaje && <p className="mensaje">{mensaje}</p>}
                 </form>
 
-                <div style={{ padding: '10px', textAlign: 'center' }}>
+                <div style={{ padding: "10px", textAlign: "center" }}>
                     <h5 className="subtitulo-letrero">
                         ¿No tienes cuenta? <a href="/register">Regístrate</a>
                     </h5>

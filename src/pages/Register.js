@@ -8,27 +8,24 @@ import { isValidPassword, isPasswordMatch, PasswordField } from '../funccions/va
 import { isValidPhoneNumber } from '../funccions/validations/Phone';
 import '../styles/Register.css';
 
+const WEBSERVICE_IP = process.env.REACT_APP_WEBSERVICE_IP;
+
 const Registro = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
+        username: '',
         nombre: '',
         appaterno: '',
         apmaterno: '',
         telefono: '',
-        correo: '',
+        email: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        rol: 'common_user'
     });
+
     const [mensaje, setMensaje] = useState('');
-    const [errores, setErrores] = useState({
-        nombreError: '',
-        appaternoError: '',
-        apmaternoError: '',
-        telefonoError: '',
-        correoError: '',
-        passwordError: '',
-        confirmPasswordError: ''
-    });
+    const [errores, setErrores] = useState({});
     const [emptyFields, setEmptyFields] = useState([]);
     const [showAlert, setShowAlert] = useState(false);
 
@@ -38,57 +35,62 @@ const Registro = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
-        });
+        setFormData({ ...formData, [name]: value });
+
+        // Validaciones en tiempo real
+        let newErrors = { ...errores };
 
         if (name === 'password') {
-            setErrores({
-                ...errores,
-                passwordError: isValidPassword(value),
-            });
+            newErrors.passwordError = isValidPassword(value);
         } else if (name === 'confirmPassword') {
-            setErrores({
-                ...errores,
-                confirmPasswordError: isPasswordMatch(formData.password, value),
-            });
+            newErrors.confirmPasswordError = isPasswordMatch(formData.password, value);
         } else if (name === 'telefono') {
-            setErrores({
-                ...errores,
-                telefonoError: isValidPhoneNumber(value),
-            });
+            newErrors.telefonoError = isValidPhoneNumber(value);
         }
+
+        setErrores(newErrors);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setEmptyFields([]);
         setMensaje('');
+        setEmptyFields([]);
 
+        // Validar campos vacíos
         const camposVacios = validarCamposVacios(formData, setShowAlert, setEmptyFields);
+        const nuevosErrores = {
+            passwordError: isValidPassword(formData.password),
+            confirmPasswordError: isPasswordMatch(formData.password, formData.confirmPassword),
+            telefonoError: isValidPhoneNumber(formData.telefono),
+        };
 
-        if (camposVacios || errores.passwordError || errores.confirmPasswordError || errores.telefonoError) {
+        setErrores(nuevosErrores);
+
+        if (camposVacios || nuevosErrores.passwordError || nuevosErrores.confirmPasswordError || nuevosErrores.telefonoError) {
             setMensaje('Por favor, corrige los errores antes de enviar el formulario.');
             return;
         }
 
         try {
-            setFormData({
-                nombre: '',
-                appaterno: '',
-                apmaterno: '',
-                telefono: '',
-                correo: '',
-                password: '',
-                confirmPassword: ''
+            console.log("Enviando datos al backend:", formData);
+            const response = await fetch(`${WEBSERVICE_IP}/users/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
             });
 
-            setMensaje('Registro exitoso');
-            setTimeout(() => {
-                navigate('/');
-            }, 2000);
+            console.log("Código de respuesta:", response.status);
+            const result = await response.json();
+            console.log("Respuesta del backend:", result);
+
+            if (response.status === 201) {
+                setMensaje('Registro exitoso, redirigiendo...');
+                setTimeout(() => navigate('/login'), 2000);
+            } else {
+                setMensaje(result.error || 'Error al registrar usuario.');
+            }
         } catch (error) {
+            console.error("Error en la solicitud:", error);
             setMensaje('Error de conexión. Inténtalo de nuevo más tarde.');
         }
     };
@@ -97,20 +99,9 @@ const Registro = () => {
         <div className="registro-container">
             <div className="registro-header">
                 <ArrowBackIcon className="back-arrow" onClick={handleBackClick} />
-                <h1>  </h1>
             </div>
 
-            <Box 
-                sx={{ 
-                    backgroundColor: 'white', 
-                    padding: '30px', 
-                    borderRadius: '8px', 
-                    boxShadow: 3, 
-                    marginTop: '30px', 
-                    maxWidth: '600px', 
-                    margin: '0 auto' 
-                }}
-            >
+            <Box className="registro-box">
                 <div className="intro-text" style={{ textAlign: 'center', marginBottom: '20px' }}>
                     <h1>¡Empezar!</h1>
                     <h3 className="subtitulo-letrero">Regístrate para continuar</h3>
@@ -120,57 +111,24 @@ const Registro = () => {
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
                             <TextField
-                                label="Nombre"
-                                name="nombre"
-                                value={formData.nombre}
+                                label="Nombre de usuario"
+                                name="username"
+                                value={formData.username}
                                 onChange={handleChange}
                                 fullWidth
-                                error={emptyFields.includes('nombre')}
-                                helperText={emptyFields.includes('nombre') ? 'Campo obligatorio' : ''}
+                                error={emptyFields.includes('username')}
+                                helperText={emptyFields.includes('username') ? 'Campo obligatorio' : ''}
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12}>
                             <TextField
-                                label="Apellido Paterno"
-                                name="appaterno"
-                                value={formData.appaterno}
+                                label="Correo Electrónico"
+                                name="email"
+                                value={formData.email}
                                 onChange={handleChange}
                                 fullWidth
-                                error={emptyFields.includes('appaterno')}
-                                helperText={emptyFields.includes('appaterno') ? 'Campo obligatorio' : ''}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                label="Apellido Materno"
-                                name="apmaterno"
-                                value={formData.apmaterno}
-                                onChange={handleChange}
-                                fullWidth
-                                error={emptyFields.includes('apmaterno')}
-                                helperText={emptyFields.includes('apmaterno') ? 'Campo obligatorio' : ''}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                label="Teléfono"
-                                name="telefono"
-                                value={formData.telefono}
-                                onChange={handleChange}
-                                fullWidth
-                                error={!!errores.telefonoError || emptyFields.includes('telefono')}
-                                helperText={errores.telefonoError || (emptyFields.includes('telefono') ? 'Campo obligatorio' : '')}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                label="Correo"
-                                name="correo"
-                                value={formData.correo}
-                                onChange={handleChange}
-                                fullWidth
-                                error={emptyFields.includes('correo')}
-                                helperText={emptyFields.includes('correo') ? 'Campo obligatorio' : ''}
+                                error={emptyFields.includes('email')}
+                                helperText={emptyFields.includes('email') ? 'Campo obligatorio' : ''}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
@@ -193,8 +151,8 @@ const Registro = () => {
                                 helperText={errores.confirmPasswordError || (emptyFields.includes('confirmPassword') ? 'Campo obligatorio' : '')}
                             />
                         </Grid>
-                        <Grid item xs={12} style={{ textAlign: 'center' }}>
-                            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ padding: '12px 0' }}>
+                        <Grid item xs={12}>
+                            <Button type="submit" variant="contained" color="primary" fullWidth>
                                 Registrarse
                             </Button>
                         </Grid>
@@ -203,7 +161,7 @@ const Registro = () => {
                 </form>
 
                 <div style={{ padding: '10px', textAlign: 'center' }}>
-                    <h5 className="subtitulo-letrero">¿Ya tienes cuenta? <a href="/login">Iniciar sesión</a></h5>
+                    <h5>¿Ya tienes cuenta? <a href="/login">Iniciar sesión</a></h5>
                 </div>
 
                 <AlertBox showAlert={showAlert} setShowAlert={setShowAlert} />
