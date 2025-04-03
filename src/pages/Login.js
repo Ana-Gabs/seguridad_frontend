@@ -33,7 +33,7 @@ const Login = () => {
         setMensaje("");
         setErrores({});
 
-        if (!formData.emailOrUsername || !formData.password) {
+        if (!formData.emailOrUsername.trim() || !formData.password.trim()) {
             setMensaje("Por favor, completa todos los campos.");
             return;
         }
@@ -55,11 +55,8 @@ const Login = () => {
                 navigate("/home");
             } else {
                 // Manejar errores del backend
-                if (result.intDataMessage) {
-                    setErrores(result.intDataMessage[0]); // Extrae los errores específicos
-                } else {
-                    setMensaje("Error al iniciar sesión.");
-                }
+                setErrores(result.intDataMessage ? result.intDataMessage[0] : {});
+                setMensaje(result.error || "Error al iniciar sesión.");
             }
         } catch (error) {
             setMensaje("Error de conexión. Inténtalo de nuevo más tarde.");
@@ -82,7 +79,7 @@ const Login = () => {
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
                             <TextField
-                                label="Usuario o Correo"
+                                label="Usuario / Correo"
                                 name="emailOrUsername"
                                 value={formData.emailOrUsername}
                                 onChange={handleChange}
